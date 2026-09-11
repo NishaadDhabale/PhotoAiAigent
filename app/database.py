@@ -718,3 +718,50 @@ def get_all_photos():
     connection.close()
 
     return photos
+
+def get_photos_by_ids(photo_ids):
+    """
+    Return photos whose IDs are in photo_ids.
+
+    The returned list preserves the order supplied by photo_ids.
+    """
+
+    if not photo_ids:
+        return []
+
+    connection = get_connection()
+    connection.row_factory = sqlite3.Row
+
+    placeholders = ",".join(
+        "?" for _ in photo_ids
+    )
+
+    cursor = connection.cursor()
+
+    cursor.execute(
+        f"""
+        SELECT
+            id,
+            filename,
+            path,
+            date_taken,
+            camera,
+            location_name
+        FROM photos
+        WHERE id IN ({placeholders})
+        """,
+        [int(photo_id) for photo_id in photo_ids],
+    )
+
+    rows = {
+        row["id"]: dict(row)
+        for row in cursor.fetchall()
+    }
+
+    connection.close()
+
+    return [
+        rows[int(photo_id)]
+        for photo_id in photo_ids
+        if int(photo_id) in rows
+    ]

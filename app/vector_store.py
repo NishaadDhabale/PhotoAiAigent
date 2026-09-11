@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import chromadb
 from chromadb.config import Settings
 
@@ -138,7 +139,9 @@ class PhotoVectorStore:
         n_results = min(n_results, self.count())
 
         results = self.collection.query(
-            query_embeddings=[embedding.tolist()],
+            query_embeddings=[
+              np.asarray(embedding, dtype=np.float32).tolist()
+            ],
             n_results=n_results,
             include=[
                 "metadatas",
