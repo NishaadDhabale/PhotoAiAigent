@@ -6,7 +6,7 @@ from vector_store import PhotoVectorStore
 
 
 def index_all_photos():
-    """Generate and store embeddings for every photo in SQLite."""
+    """Incrementally generate and store embeddings for photos missing from ChromaDB."""
 
     photos = get_all_photos()
 
@@ -20,10 +20,11 @@ def index_all_photos():
     store = PhotoVectorStore()
 
     indexed = 0
+    already_indexed = 0
     skipped = 0
     failed = 0
 
-    print("\nStarting image indexing...\n")
+    print("\nStarting incremental image indexing...\n")
 
     for number, photo in enumerate(photos, start=1):
 
@@ -35,6 +36,12 @@ def index_all_photos():
             f"[{number}/{len(photos)}] "
             f"{filename}"
         )
+
+        # Do not regenerate embeddings that already exist.
+        if store.has_photo(photo_id):
+            print("  Already indexed — skipped")
+            already_indexed += 1
+            continue
 
         if not path.exists():
             print("  SKIPPED: file does not exist")
@@ -66,14 +73,15 @@ def index_all_photos():
             )
 
     print("\n" + "=" * 60)
-    print("IMAGE INDEXING COMPLETE")
+    print("INCREMENTAL IMAGE INDEXING COMPLETE")
     print("=" * 60)
 
-    print(f"SQLite photos: {len(photos)}")
-    print(f"Indexed:       {indexed}")
-    print(f"Skipped:       {skipped}")
-    print(f"Failed:        {failed}")
-    print(f"Chroma count:  {store.count()}")
+    print(f"SQLite photos:  {len(photos)}")
+    print(f"Newly indexed:  {indexed}")
+    print(f"Already indexed: {already_indexed}")
+    print(f"Skipped:         {skipped}")
+    print(f"Failed:          {failed}")
+    print(f"Chroma count:    {store.count()}")
     print("=" * 60)
 
 

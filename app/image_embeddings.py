@@ -5,7 +5,6 @@ import torch
 import open_clip
 from PIL import Image
 
-
 class ImageEmbedder:
     def __init__(self):
         self.device = (

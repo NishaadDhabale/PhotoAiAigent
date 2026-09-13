@@ -39,6 +39,16 @@ class PhotoVectorStore:
         """Return the number of stored photo embeddings."""
         return self.collection.count()
 
+    def has_photo(self, photo_id):
+        """Return True if a photo embedding already exists in ChromaDB."""
+
+        result = self.collection.get(
+            ids=[str(photo_id)],
+            include=[],
+        )
+
+        return bool(result["ids"])
+
     def upsert_photo(
         self,
         photo_id,
@@ -190,3 +200,31 @@ class PhotoVectorStore:
             "embedding": result["embeddings"][0],
             "metadata": result["metadatas"][0],
         }
+
+    def update_photo_path(self, photo_id, path):
+        """
+        Update only the stored filesystem path for an existing photo.
+
+        The embedding itself is not changed.
+        """
+
+        photo_id = str(photo_id)
+
+        result = self.collection.get(
+            ids=[photo_id],
+            include=["metadatas"],
+        )
+
+        if not result["ids"]:
+            return False
+
+        metadata = result["metadatas"][0] or {}
+
+        metadata["path"] = str(path)
+
+        self.collection.update(
+            ids=[photo_id],
+            metadatas=[metadata],
+        )
+
+        return True

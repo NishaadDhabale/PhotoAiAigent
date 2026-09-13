@@ -3,6 +3,7 @@ from metadata import get_metadata, parse_date_taken
 from sessions import build_sessions, describe_session
 from database import create_database, migrate_database, save_photo
 from location import coordinates_to_location
+from indexer import index_all_photos
 
 PHOTO_FOLDER = r"D:\project\PhotoAgent\Images"
 
@@ -65,5 +66,8 @@ for number, session in enumerate(sessions, start=1):
     print(f"  Duration: {information['duration']}")
 
 print(f"\nUndated photos: {len(undated_photos)}")
+
+print("\nUpdating semantic search index...")
+index_all_photos()
 
 print("\nDone!")

@@ -12,6 +12,8 @@ def get_connection():
 
     return connection
 
+
+
 def create_database():
     DATABASE_PATH.parent.mkdir(
         parents=True,
@@ -69,6 +71,7 @@ def create_database():
 
     connection.commit()
     connection.close()
+
 
 
 def migrate_database():
@@ -765,3 +768,28 @@ def get_photos_by_ids(photo_ids):
         for photo_id in photo_ids
         if int(photo_id) in rows
     ]
+
+
+def update_photo_path(photo_id, new_path):
+    """Update the filesystem path and filename for an existing photo."""
+
+    connection = get_connection()
+
+    try:
+        connection.execute(
+            """
+            UPDATE photos
+            SET path = ?, filename = ?
+            WHERE id = ?
+            """,
+            (
+                str(new_path),
+                Path(new_path).name,
+                int(photo_id),
+            ),
+        )
+
+        connection.commit()
+
+    finally:
+        connection.close()
