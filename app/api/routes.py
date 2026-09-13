@@ -9,6 +9,7 @@ from organization_service import (
     get_organization_preview,
     execute_organization,
 )
+from photo_access import open_photo_location
 from people_management import (
     rename_person,
     merge_person_groups,
@@ -1162,6 +1163,41 @@ def merge_people_route(
         )
 
     except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc),
+        )
+
+
+@router.post("/photos/{photo_id}/open-location")
+def open_photo_location_route(photo_id: int):
+    """
+    Open Windows Explorer and select the requested photo.
+    """
+
+    try:
+        photo = open_photo_location(photo_id)
+
+        return {
+            "success": True,
+            "photo_id": photo["id"],
+            "filename": photo["filename"],
+            "path": photo["path"],
+        }
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
+
+    except RuntimeError as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),

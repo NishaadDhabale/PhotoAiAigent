@@ -253,3 +253,23 @@ export async function mergePeople(
 
   return data;
 }
+
+
+export async function openPhotoLocation(photoId) {
+  const response = await fetch(
+    `${config.apiBaseUrl}/api/photos/${photoId}/open-location`,
+    {
+      method: "POST",
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Unable to open photo location."
+    );
+  }
+
+  return data;
+}

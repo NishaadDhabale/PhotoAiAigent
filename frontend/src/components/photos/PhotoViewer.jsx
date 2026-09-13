@@ -1,31 +1,12 @@
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  CalendarDays,
-  Camera,
   ChevronLeft,
   ChevronRight,
-  Download,
-  MapPin,
   X,
+  FolderOpen,
 } from "lucide-react";
-import { getPhotoImageUrl } from "../../api/photoApi";
 
-function formatDate(date) {
-  if (!date) return "Unknown date";
-
-  const parsed = new Date(date);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return date;
-  }
-
-  return parsed.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { getPhotoImageUrl, openPhotoLocation } from "../../api/photoApi";
 
 export default function PhotoViewer({
   photos,
@@ -58,105 +39,117 @@ export default function PhotoViewer({
     };
   }, [selectedPhoto, onClose, onNext, onPrevious]);
 
-  return (
-    <AnimatePresence>
-      {selectedPhoto && (
-        <motion.div
-          className="photo-viewer"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div
-            className="photo-viewer-content"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.2 }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="viewer-close"
-              onClick={onClose}
-              aria-label="Close viewer"
-            >
-              <X size={22} />
-            </button>
+  if (!selectedPhoto) {
+    return null;
+  }
 
+  const currentIndex = photos.findIndex(
+    (photo) => photo.id === selectedPhoto.id
+  );
+
+  const hasPrevious = photos.length > 1;
+  const hasNext = photos.length > 1;
+
+  const handleOpenLocation = async () => {
+    try {
+      await openPhotoLocation(selectedPhoto.id);
+    } catch (error) {
+      window.alert(
+        error.message || "Unable to open the photo location."
+      );
+    }
+  };
+
+  const handleOverlayClick = (event) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div
+      className="photo-viewer-overlay"
+      onMouseDown={handleOverlayClick}
+    >
+      <div
+        className="photo-viewer-modal"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        {/* Close */}
+        <button
+          type="button"
+          className="photo-viewer-close"
+          onClick={onClose}
+          aria-label="Close photo"
+        >
+          <X size={21} />
+        </button>
+
+        {/* Image area */}
+        <div className="photo-viewer-stage">
+          {hasPrevious && (
             <button
               type="button"
-              className="viewer-nav viewer-prev"
+              className="photo-viewer-arrow photo-viewer-arrow-left"
               onClick={onPrevious}
               aria-label="Previous photo"
-              disabled={photos.length <= 1}
+              disabled={currentIndex === -1}
             >
-              <ChevronLeft size={28} />
+              <ChevronLeft size={25} />
             </button>
+          )}
 
-            <div className="viewer-image-container">
-              <img
-                src={getPhotoImageUrl(selectedPhoto.id)}
-                alt={selectedPhoto.filename}
-                className="viewer-image"
-              />
-            </div>
+          <div className="photo-viewer-image-wrap">
+            <img
+              src={getPhotoImageUrl(selectedPhoto.id)}
+              alt={selectedPhoto.filename}
+              className="photo-viewer-image"
+            />
+          </div>
 
+          {hasNext && (
             <button
               type="button"
-              className="viewer-nav viewer-next"
+              className="photo-viewer-arrow photo-viewer-arrow-right"
               onClick={onNext}
               aria-label="Next photo"
-              disabled={photos.length <= 1}
+              disabled={currentIndex === -1}
             >
-              <ChevronRight size={28} />
+              <ChevronRight size={25} />
             </button>
+          )}
+        </div>
 
-            <div className="viewer-info">
-              <div className="viewer-title-row">
-                <div>
-                  <h2>{selectedPhoto.filename}</h2>
-                  <p>Photo #{selectedPhoto.id}</p>
-                </div>
+        {/* Information area */}
+        <div className="photo-viewer-info">
+          <div className="photo-viewer-details">
+            <h2>{selectedPhoto.filename}</h2>
 
-                <a
-                  className="viewer-download"
-                  href={getPhotoImageUrl(selectedPhoto.id)}
-                  download={selectedPhoto.filename}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Open original image"
-                >
-                  <Download size={17} />
-                  <span>Open original</span>
-                </a>
-              </div>
+            <div className="photo-viewer-meta">
+              {selectedPhoto.date_taken && (
+                <span>{selectedPhoto.date_taken}</span>
+              )}
 
-              <div className="viewer-metadata">
-                <span>
-                  <CalendarDays size={15} />
-                  {formatDate(selectedPhoto.date_taken)}
-                </span>
+              {selectedPhoto.camera && (
+                <span>{selectedPhoto.camera}</span>
+              )}
 
-                {selectedPhoto.camera && (
-                  <span>
-                    <Camera size={15} />
-                    {selectedPhoto.camera}
-                  </span>
-                )}
-
-                {selectedPhoto.location_name && (
-                  <span>
-                    <MapPin size={15} />
-                    {selectedPhoto.location_name}
-                  </span>
-                )}
-              </div>
+              {selectedPhoto.location_name && (
+                <span>{selectedPhoto.location_name}</span>
+              )}
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </div>
+
+          <button
+            type="button"
+            className="photo-viewer-location-button"
+            onClick={handleOpenLocation}
+          >
+            <FolderOpen size={16} />
+            <span>Open file location</span>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
