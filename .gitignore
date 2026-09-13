@@ -1,6 +1,8 @@
 .venv/
 __pycache__/
 *.pyc
-
 data/
 .env
+Images/
+face_crops/
+face_detection_results/
